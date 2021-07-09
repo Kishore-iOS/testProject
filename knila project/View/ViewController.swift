@@ -9,7 +9,7 @@ import UIKit
 import CoreData
 
 class ViewController: UIViewController {
-    var usersData : Userslist!
+   
     @IBOutlet weak var userListTableview: UITableView!
     var userImageView = UIImageView()
     var usersListData = [Data]()
@@ -25,7 +25,6 @@ class ViewController: UIViewController {
     
     func getUserList() {
         APIDownload.shared.downloadDataFromURL("https://reqres.in/api/", "users", "GET", [:]) { (data) in
-            self.usersData = data
             self.usersListData = data.data ?? []
             self.userListTableview.reloadData()
         }
@@ -34,7 +33,7 @@ class ViewController: UIViewController {
 
 extension ViewController: UITableViewDelegate,UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return usersData != nil ? usersListData.count : 0
+        return usersListData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

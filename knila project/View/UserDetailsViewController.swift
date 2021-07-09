@@ -22,7 +22,7 @@ class UserDetailsViewController: UIViewController, UINavigationControllerDelegat
     @IBOutlet weak var imagePickerBtn: UIButton!
     var userData: Data?
     var delegate: NewUserDelegate?
-    var userNames = [""]
+    var userEmails = [""]
     var isAddUser = false
     var isEditUser = false
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
@@ -60,7 +60,7 @@ class UserDetailsViewController: UIViewController, UINavigationControllerDelegat
         userEmail.isUserInteractionEnabled = false
         userId.isUserInteractionEnabled = false
         saveBtn.setTitleColor(.white, for: .normal)
-        //saveBtn.addTarget(self, action: #selector(savedata), for: .touchUpInside)
+        saveBtn.addTarget(self, action: #selector(savedata), for: .touchUpInside)
         saveBtn.backgroundColor = .black
         if (isAddUser) {
             userAddAction()
@@ -91,37 +91,40 @@ class UserDetailsViewController: UIViewController, UINavigationControllerDelegat
     
     //Store data to core data
     @objc func savedata() {
-        if (userNames.contains("\(userData?.first_name ?? "") \(userData?.last_name ?? "")")) && !isAddUser {
+        if (userEmails.contains("\(userData?.email ?? "")")) && !isAddUser && !isEditUser{
             Extensions.showAlert("User Already Existed", self)
         }else {
-            let context = appDelegate.persistentContainer.viewContext
-            let entity = NSEntityDescription.entity(forEntityName: "UserList", in: context)
-            let newUser = NSManagedObject(entity: entity!, insertInto: context)
-            
-            newUser.setValue(isAddUser ? userName.text : "\(userData?.first_name ?? "") \(userData?.last_name ?? "")", forKey: "userName")
-            newUser.setValue(isAddUser ? userId.text : "\(userData?.id ?? 0)", forKey: "userId")
-            newUser.setValue(isAddUser ? userName.text : "\(userData?.avatar ?? "")", forKey: "userImage")
-            newUser.setValue(isAddUser ? userEmail.text : "\(userData?.email ?? "")", forKey: "email")
-            do {
-                try context.save()
-                Extensions.showAlert("Data saved Successfully", self)
-                userNames.append("\(userData?.first_name ?? "") \(userData?.last_name ?? "")")
-                imagePickerBtn.isUserInteractionEnabled = false
-                if isAddUser {
-                    var user: Data!
-                    user.email = userEmail.text ?? ""
-                    user.id = Int(userId.text ?? "0") ?? 0
-                    user.first_name = userName.text ?? ""
-                    delegate?.newUser(type: user)
-                    navigationController?.popViewController(animated: true)
+            if (userEmails.contains(userEmail.text?.replacingOccurrences(of: "Email: ", with: "") ?? "")) {
+                Extensions.showAlert("Email Already Existed", self)
+            }else {
+                let context = appDelegate.persistentContainer.viewContext
+                let entity = NSEntityDescription.entity(forEntityName: "UserList", in: context)
+                let newUser = NSManagedObject(entity: entity!, insertInto: context)
+                
+                newUser.setValue(isAddUser || isEditUser ? userName.text : "\(userData?.first_name ?? "") \(userData?.last_name ?? "")", forKey: "userName")
+                newUser.setValue(isAddUser || isEditUser ? userId.text : "\(userData?.id ?? 0)", forKey: "userId")
+                newUser.setValue(isAddUser || isEditUser ? userImage.image?.pngData() : "\(userData?.avatar ?? "")", forKey: "userImage")
+                newUser.setValue(isAddUser || isEditUser ? userEmail.text : "\(userData?.email ?? "")", forKey: "email")
+                do {
+                    try context.save()
+                    Extensions.showAlert("Data saved Successfully", self)
+                    userEmails.append(isEditUser || isAddUser ? userEmail.text?.replacingOccurrences(of: "Email: ", with: "") ?? "" : "\(userData?.email ?? "")")
+                    imagePickerBtn.isUserInteractionEnabled = false
+                    if isAddUser {
+                        
+                        var user: Data!
+                        user.email = userEmail.text ?? ""
+                        user.id = Int(userId.text ?? "0") ?? 0
+                        user.first_name = userName.text ?? ""
+                        delegate?.newUser(type: user)
+                        navigationController?.popViewController(animated: true)
+                    }
+                } catch {
+                    print("Failed saving")
+                    Extensions.showAlert("Failed saving", self)
                 }
-            } catch {
-                print("Failed saving")
-                Extensions.showAlert("Failed saving", self)
             }
         }
-        
-       
     }
     
     //Get data from coredata
@@ -133,8 +136,8 @@ class UserDetailsViewController: UIViewController, UINavigationControllerDelegat
         do {
             let result = try context.fetch(request)
             for data in result as! [NSManagedObject] {
-               print(data.value(forKey: "userName") as! String)
-                userNames.append(data.value(forKey: "userName") as! String)
+               print(data.value(forKey: "email") as! String)
+                userEmails.append(data.value(forKey: "email") as! String)
             }
         } catch {
             print("Failed")

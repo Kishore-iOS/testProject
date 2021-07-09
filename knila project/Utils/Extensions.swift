@@ -18,5 +18,6 @@ class Extensions: NSObject {
         otherAlert.addAction(dismiss)
         view.present(otherAlert, animated: true, completion: nil)
     }
-
 }
+
+
